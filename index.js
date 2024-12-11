@@ -15,6 +15,7 @@ app.use(cors({credentials: true, origin: 'http://localhost:3000'})); //front use
 app.use(express.static('public/images'))
 
 //routes
-app.use('/users', userRoutes);
+//app.use('/users', userRoutes);
+app.use("/users", userRoutes);
 
 app.listen(port); //front use port 5000
