@@ -1,8 +1,10 @@
 const createUsertoken = require('../helpers/createUserToken');
 const getToken = require('../helpers/getToken');
+const getUserByToken = require("../helpers/getUserByToken");
 const jwt = require("jsonwebtoken");
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const { response } = require('express');
 
 module.exports = class UserController{
     static async register(req, res){
@@ -110,5 +112,62 @@ module.exports = class UserController{
             return
         }
         res.status(200).json({user})
+    }
+
+    static async editUser(req, res){
+        const id = req.params.id
+        const token = getToken(req)
+        const user = await getUserByToken(token)//await User.findById(id)
+
+        if(!user){
+            res.status(422).json({ message: "User don't exist" });
+            return
+        }
+
+        const dataUser = req.body
+        const userExists = await User.findOne({ email: dataUser.email})
+
+        if(dataUser.email !== user.email && userExists){
+            res.status(422).json({ message: "Email alredy cadastred" });
+            return;
+        }
+
+        user.email = dataUser.email
+
+        if(!dataUser.name){
+            res.status(422).json({message:"Please enter the name"})
+            return
+        }
+        user.name = dataUser.name;
+
+        if(!dataUser.phone){
+            res.status(422).json({message:"Please enter the phone number"})
+            return
+        }
+        user.phone = dataUser.phone;
+        
+        if(dataUser.password !== dataUser.confirm){
+            res.status(422).json({message:"Please enter the same password again"})
+            return
+        }else if(dataUser.password != null){
+            
+            const salt = await bcrypt.genSalt(12);
+            const passwordHash = await bcrypt.hash(dataUser.password, salt);
+            user.password = passwordHash
+        }
+        //console.log(user)
+
+        try {
+            await User.findOneAndUpdate(
+                {_id: user._id},
+                {$set: user},
+
+            )
+            res.status(200).json({message: "Updated user successfully"})
+        } catch (error) {
+            res.status(500).json({message: error})
+        }
+
+        //res.status(200).json({user})
     }
 }
