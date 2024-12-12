@@ -119,6 +119,10 @@ module.exports = class UserController{
         const token = getToken(req)
         const user = await getUserByToken(token)//await User.findById(id)
 
+        if(req.file){
+            user.image = req.file.filename
+        }
+
         if(!user){
             res.status(422).json({ message: "User don't exist" });
             return
