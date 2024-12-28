@@ -114,6 +114,7 @@ module.exports = class PetController {
         const pet = await Pet.findOne({_id: id})
         if (!pet) {
             res.status(404).json({message:"Pet not found"})
+            return
         }
 
         const token = getToken(req);
@@ -121,9 +122,67 @@ module.exports = class PetController {
 
         if(pet.user._id.toString() !== user._id.toString()) {
             res.status(422).json({message:"Please try again"})
+            return
         }
 
         await Pet.findByIdAndDelete(id)
         res.status(200).json({ message: "Pet deleted successfully"});
+    }
+
+    static async updatePetById(req, res){
+        const id = req.params.id
+        const { name, age, weight, color, available } = req.body;
+        //const available = true
+        const images = req.files;
+        const updateData = {}
+        const pet = await Pet.findOne({_id: id})
+
+        if(!pet){
+            res.status(404).json({ message: "Pet not found" });
+        }
+
+        /*const token = getToken(req);
+        const user = await getUserByToken(token);
+
+        if(pet.user._id.toString() !== user._id.toString()) {
+            res.status(422).json({message:"Please try again"})
+            return
+        }*/
+        if(!name){
+            res.status(422).json({message:"Please enter the name"})
+            return
+        }else{
+            updateData.name = name
+        }
+        if(!age){
+            res.status(422).json({message:"Please enter the age of the pet"})
+            return
+        }else{
+            updateData.age = age
+        }
+        if(!weight){
+            res.status(422).json({message:"Please enter the weight of the pet"})
+            return
+        }else{
+            updateData.weight = weight
+        }
+        if(!color){
+            res.status(422).json({message:"Please enter the color of the pet"})
+            return
+        }else{
+            updateData.color = color
+        }
+
+        if(images.length === 0){
+            res.status(422).json({message:"Please enter the images of the pet"})
+        }else{
+            updateData.images = []
+            images.map((image) => {
+                updateData.images.push(image.filename)
+            })
+        }
+
+        await Pet.findByIdAndUpdate(id, updateData)
+        res.status(200).json({ pet });
     }
 }
